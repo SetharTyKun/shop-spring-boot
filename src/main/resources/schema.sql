@@ -1,0 +1,8 @@
+DROP TABLE IF EXISTS product;
+
+CREATE TABLE product (
+    id    BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name  VARCHAR(80) NOT NULL UNIQUE,
+    price DECIMAL(10,2) NOT NULL,
+    stock INT NOT NULL CHECK (stock >= 0)
+);
