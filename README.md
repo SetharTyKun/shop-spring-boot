@@ -36,3 +36,17 @@ edu.itc.se:shop:jar:0.0.1-SNAPSHOT
 +- org.springframework.boot:spring-boot-starter-validation-test:jar:4.1.1:test
 \- org.springframework.boot:spring-boot-starter-webmvc-test:jar:4.1.1:test
 ```
+
+2. Running the app
+
+Command: `./mvnw spring-boot:run`
+
+```
+curl.exe -i "http://localhost:8080/hello?name=Makara"
+HTTP/1.1 200
+Content-Type: application/json
+
+{"message":"Hello, Makara!","at":"2026-10-28T11:29:54.847537100Z"}
+```
+
+DevTools: after I changed the message to "Hi, " and saved, the app restarted by itself and the response became `Hi, Makara!`.
