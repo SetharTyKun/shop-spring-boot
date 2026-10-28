@@ -46,4 +46,10 @@ public class ProductRepository {
                    .param("id", id)
                    .update();
     }
+
+    public int delete(long id) {
+        return jdbc.sql("DELETE FROM product WHERE id = :id")
+                .param("id", id)
+                .update();
+    }
 }

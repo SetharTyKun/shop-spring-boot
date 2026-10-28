@@ -31,6 +31,7 @@
 		<java.version>25</java.version>
 	</properties>
 	<dependencies>
+
         <!-- Lets embedded Tomcat compile and run JSP files -->
         <dependency>
             <groupId>org.apache.tomcat.embed</groupId>
