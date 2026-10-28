@@ -72,7 +72,6 @@ spring-boot-maven-plugin copies every dependency (embedded Tomcat, Spring MVC, J
 into BOOT-INF/lib. Because the server is inside the jar, `java -jar` starts the whole app by itself.
 
 5. Actuator and auto-configuration
-
 `GET /actuator/health` returns `{"groups":["liveness","readiness"],"status":"UP"}`.
 
 I started the jar with `--debug` and searched the condition evaluation report. DataSourceAutoConfiguration
@@ -82,6 +81,12 @@ matched because of this line:
 @ConditionalOnClass found required classes 'javax.sql.DataSource',
 'org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType' (OnClassCondition)
 ```
-
 Spring Boot found the JDBC and H2 classes on the classpath, so it configured a data source (a HikariCP pool)
 automatically, without any database code from me.
+
+6. Gradle bonus
+
+I generated the same project with `type=gradle-project-kotlin` into the sibling folder `shop-gradle`
+and ran `.\gradlew bootRun`. It started on port 8080 and `/actuator/health` returned `UP`.
+Only the wrapper (`gradlew`, `gradlew.bat`, `gradle/wrapper`) and the source files are committed.
+`.gradle/` and `build/` are ignored by `.gitignore`.
