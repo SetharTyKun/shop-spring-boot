@@ -180,3 +180,115 @@ It asserts the text `Welcome ann! It is 09:15:02` and which notifier received th
   database error code to Spring's own unchecked `DuplicateKeyException`.
   With raw JDBC you would get the plain `SQLException` instead.
 
+## Task 5: JSP Views, Profiles, Actuator, Logging and an Aspect
+
+### What I built
+
+```
+edu.itc.shop
+├── config/   ShopProperties, PropertiesConfig, LowStockHealthIndicator
+├── service/  TimingAspect
+└── web/      ProductPageController, RequestIdFilter, dto/ProductRow
+webapp/WEB-INF/jsp/products/   list.jsp, form.jsp
+resources/   application.yml, application-dev.yml, application-prod.yml, static/css/site.css
+```
+
+### JSP views
+
+`ProductPageController` returns the view names `products/list` and `products/form`. The prefix `/WEB-INF/jsp/`
+and the suffix `.jsp` in `application.yml` (under `spring.mvc.view`) turn them into JSP files. The controller calls
+`ProductService`; it has no `try/catch` and no business logic.
+
+- All output is escaped with `<c:out>`, so a product name cannot inject HTML or a script.
+- After a successful `POST /products` the controller returns `redirect:/products` (POST-redirect-GET). A browser
+  refresh then does not submit the form twice. The message "Product saved" travels as a flash attribute.
+- A failed validation shows the form again with the error messages.
+- The list page shows the currency, the net price and the gross price
+  (gross = price x (1 + taxRate), rounded half-up, e.g. Laptop 899.99 x 1.10 = 989.99).
+  Products below the stock threshold get the CSS class `low` and are shown in red.
+
+![Product list](screenshots/task5-products.png)
+
+### Profiles and typed properties
+
+`ShopProperties` is a `@ConfigurationProperties("shop")` record with `currency`, `taxRate` and `lowStockThreshold`.
+It is validated (`@NotBlank`, `@DecimalMin`, `@Min`), so the application does not start if a value is invalid.
+
+| | dev | prod |
+|---|---|---|
+| Profile line | `The following 1 profile is active: "dev"` | `The following 1 profile is active: "prod"` |
+| H2 console | `H2 console available at '/h2-console'. Database available at 'jdbc:h2:mem:shopdb'` | not started, `/h2-console` returns 404 |
+| Log level | DEBUG (SQL and timing lines) | INFO |
+| Datasource | in-memory H2 from `application.yml` | `DB_URL`, `DB_USER`, `DB_PASSWORD` environment variables |
+
+No password is committed; in `prod` the credentials come from the environment.
+Spring Boot 4 moved the H2 console into its own module, so `spring-boot-h2console` is in `pom.xml`.
+Without it `/h2-console` is not registered.
+
+```powershell
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=dev"
+
+$env:DB_URL="jdbc:h2:mem:proddb;DB_CLOSE_DELAY=-1"; $env:DB_USER="sa"; $env:DB_PASSWORD=""
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=prod"
+```
+
+### Actuator
+
+Exposed endpoints: `health`, `info`, `metrics`, `loggers`.
+
+`LowStockHealthIndicator` reports DOWN, with the detail `lowStockProducts`, when a product has less stock than
+`shop.low-stock-threshold` (set to 20). With the sample data Laptop (10) and Monitor (15) are below it, so the
+whole application status is DOWN:
+
+```
+"lowStock":{"details":{"lowStockProducts":["Laptop","Monitor"]},"status":"DOWN"} ... "status":"DOWN"
+```
+
+![Health DOWN](screenshots/task5-health-down.png)
+
+`GET /actuator/info` returns `{"app":{"name":"shop","version":"0.0.1-SNAPSHOT"}}`. The values are filled from
+the Maven project properties (`@project.artifactId@`, `@project.version@`).
+
+### Logging with a request id
+
+`RequestIdFilter` puts an 8-character random id into the MDC at the start of each request and removes it in a
+`finally` block. The thread is reused by the pool, so without the cleanup the id would leak into the next
+request. The console pattern prints it as `[%X{requestId}]`, so all lines of one request share the same id.
+Lines written at start-up show `[]` because there is no HTTP request yet.
+
+```
+14:34:01.426 INFO  [8ec02d9b] e.itc.shop.web.ProductPageController : created product 6 'USB'
+```
+
+A failed validation is logged at WARN:
+
+```
+PASTE YOUR WARN LINE HERE (search the terminal for "validation failed")
+```
+
+### Timing aspect
+
+`TimingAspect` is an `@Around` advice on all public methods of the `*Service` classes in
+`edu.itc.shop.service`. It logs the method and the time in microseconds at DEBUG:
+
+```
+14:38:25.122 DEBUG [1269efb8] edu.itc.shop.service.TimingAspect : ProductService.search(..) took 83013 us
+```
+
+The first call after start-up is slow (JVM warm-up); later calls are much faster.
+I changed the log level at run time, without a restart:
+
+```
+POST /actuator/loggers/edu.itc.shop.service.TimingAspect  {"configuredLevel":"OFF"}
+  -> no new "took" lines after reloading /products
+POST /actuator/loggers/edu.itc.shop.service.TimingAspect  {"configuredLevel":"DEBUG"}
+  -> the "took" line is back; GET returns {"configuredLevel":"DEBUG","effectiveLevel":"DEBUG"}
+```
+
+### Checklist
+
+- [x] JSP list and form pages work, escape output, show validation errors and use POST-redirect-GET
+- [x] `dev` and `prod` behave differently; no secret committed; `ShopProperties` validated at start-up
+- [x] Custom health indicator, info endpoint and run-time log-level change demonstrated
+- [x] Request id appears in the log lines of a request; the timing aspect logs service calls
+- [ ] Tag `task-5`
