@@ -16,7 +16,7 @@ import edu.itc.shop.service.InsufficientStockException;
 import edu.itc.shop.service.ProductNotFoundException;
 
 @RestControllerAdvice
-public class ApiExceptionAdvice {
+public class ApiExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ProblemDetail handleValidation(MethodArgumentNotValidException ex) {
