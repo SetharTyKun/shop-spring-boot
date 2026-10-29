@@ -3,6 +3,7 @@ package edu.itc.shop.web;
 import java.net.URI;
 import java.util.List;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
 import edu.itc.shop.service.InsufficientStockException;
 import edu.itc.shop.service.ProductNotFoundException;
@@ -62,6 +64,37 @@ public class ApiExceptionHandler {
         }
         return problem;
     }
+
+    // ---- Order feature (challenge) ----
+
+    @ExceptionHandler({edu.itc.shop.order.InsufficientStockException.class,
+                       edu.itc.shop.order.OrderNotCancellableException.class})
+    public ProblemDetail handleOrderConflict(RuntimeException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(edu.itc.shop.order.OrderNotFoundException.class)
+    public ProblemDetail handleOrderNotFound(RuntimeException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ProblemDetail handleBadArgument(IllegalArgumentException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ProblemDetail handleIntegrity(DataIntegrityViolationException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
+                "Invalid reference: unknown customer or product");
+    }
+
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ProblemDetail handleParamValidation(HandlerMethodValidationException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Invalid request parameters");
+    }
+
+    // ---- catch-all: must stay last ----
 
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleGenericFallback(Exception ex) {
