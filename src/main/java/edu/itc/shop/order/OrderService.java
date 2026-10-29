@@ -1,5 +1,6 @@
 package edu.itc.shop.order;
 
+import edu.itc.shop.audit.Audited;
 import edu.itc.shop.config.ShopProperties;
 import edu.itc.shop.notify.Notifier;
 import edu.itc.shop.product.ProductRepository;
@@ -29,6 +30,7 @@ public class OrderService {
         this.notifier = notifier;
     }
 
+    @Audited
     @Transactional
     public OrderDto place(PlaceOrder cmd) {
         // 1. no duplicate productId
@@ -61,7 +63,8 @@ public class OrderService {
         return new OrderDto(id, OrderStatus.NEW, total, lines);
     }
 
-        @Transactional
+    @Audited
+    @Transactional
     public OrderDto cancel(long id) {
         Order order = orders.findById(id)
                 .orElseThrow(() -> new OrderNotFoundException(id));
