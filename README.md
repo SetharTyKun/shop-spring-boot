@@ -1,5 +1,7 @@
 # Lab 2: Spring Boot shop project
 
+## Task 1: Bootstrapping with Maven and Spring Boot
+
 1. Understanding pom.xml
 
   <parent>
@@ -179,6 +181,12 @@ It asserts the text `Welcome ann! It is 09:15:02` and which notifier received th
   passes the SQLException to a `SQLExceptionTranslator`. That translator maps the
   database error code to Spring's own unchecked `DuplicateKeyException`.
   With raw JDBC you would get the plain `SQLException` instead.
+
+## Task 4: REST API, Validation & Error Handling
+- Controller Implementation: Exposed /api/products via ProductController with full support for filtering (?q=), ID lookups, resource creation (POST), stock updates (PATCH), and deletion (DELETE).
+- Validation: Enforced via DTO records (CreateProduct) using Jakarta validation constraints (@NotBlank, @DecimalMin, @PositiveOrZero). Invalid payloads are intercepted and return a 400 Bad Request with a structured list of field errors.
+- Consistent Error Handling: Implemented a global exception handler (ApiExceptionAdvice annotated with @RestControllerAdvice) that translates application exceptions (ProductNotFoundException, InsufficientStockException, DuplicateKeyException) into standardized RFC 7807 ProblemDetail responses (application/problem+json) without leaking Java stack traces.
+- Testing & Transcripts: Verified via isolated @WebMvcTest slices with MockMvc. All live interactions, successful status codes (201 Created, 204 No Content), and error conditions (404 Not Found, 409 Conflict) are fully recorded in api-session.md.
 
 ## Task 5: JSP Views, Profiles, Actuator, Logging and an Aspect
 
