@@ -10,7 +10,6 @@ import edu.itc.shop.domain.Product;
 import edu.itc.shop.repository.ProductRepository;
 import edu.itc.shop.service.ProductService;
 import jakarta.validation.Valid;
-import edu.itc.shop.service.ProductService;
 
 @Controller
 @RequestMapping("/products")
