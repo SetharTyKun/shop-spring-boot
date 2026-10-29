@@ -12,7 +12,7 @@ spring:
     view:
       prefix: /WEB-INF/jsp/
       suffix: .jsp
-
+      
 shop:
   currency: USD
   tax-rate: 0.10
