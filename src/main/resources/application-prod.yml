@@ -8,6 +8,7 @@ spring:
   sql:
     init:
       mode: always
+      data-locations: classpath:data-prod.sql
   h2:
     console:
       enabled: false

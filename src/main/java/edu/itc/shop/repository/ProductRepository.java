@@ -35,7 +35,7 @@ public class ProductRepository {
         var keys = new GeneratedKeyHolder();
         jdbc.sql("INSERT INTO product(name, price, stock) VALUES (:name, :price, :stock)")
             .paramSource(p)
-            .update(keys);
+            .update(keys, "id");
         return keys.getKey().longValue();
     }
 
