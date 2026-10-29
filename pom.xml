@@ -76,6 +76,12 @@
             <artifactId>h2</artifactId>
             <scope>runtime</scope>
         </dependency>
+        <!-- Task 5: Spring Boot 4 moved the H2 console into its own module.
+             Without it /h2-console is not registered. Enabled only in the dev profile. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-h2console</artifactId>
+        </dependency>
         
         <!-- Testing -->
         <!-- <dependency>
