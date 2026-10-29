@@ -1,0 +1,10 @@
+spring:
+  h2:
+    console:
+      enabled: true
+
+logging:
+  level:
+    edu.itc.shop: DEBUG
+    org.springframework.jdbc: DEBUG
+    org.springframework.transaction: DEBUG
