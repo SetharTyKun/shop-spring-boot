@@ -1,8 +1,13 @@
 spring:
+  config:
+    import: optional:file:.env[.properties]
   datasource:
-    url: ${DB_URL}
-    username: ${DB_USER}
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/shop}
+    username: ${DB_USER:shop}
     password: ${DB_PASSWORD}
+  sql:
+    init:
+      mode: always
   h2:
     console:
       enabled: false
