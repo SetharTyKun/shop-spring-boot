@@ -8,16 +8,21 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import edu.itc.shop.domain.Product;
 import edu.itc.shop.repository.ProductRepository;
+import edu.itc.shop.service.ProductService;
 import jakarta.validation.Valid;
+import edu.itc.shop.service.ProductService;
 
 @Controller
 @RequestMapping("/products")
 public class ProductPageController {
 
     private final ProductRepository repo;
+    private final ProductService service;
 
-    public ProductPageController(ProductRepository repo) { this.repo = repo; }
-
+    public ProductPageController(ProductRepository repo, ProductService service) {
+        this.repo = repo;
+        this.service = service;
+    }
     // GET /products  (list + search)
     @GetMapping
     public String list(@RequestParam(defaultValue = "") String q, Model model) {
@@ -50,5 +55,11 @@ public class ProductPageController {
         }
         redirect.addFlashAttribute("message", "Product saved: " + form.getName());
         return "redirect:/products";           // POST-redirect-GET
+    }
+    @PostMapping("/restock")
+    @ResponseBody
+    public String restock(@RequestParam long from, @RequestParam long to, @RequestParam int qty) {
+        service.restock(from, to, qty);
+        return "OK";
     }
 }

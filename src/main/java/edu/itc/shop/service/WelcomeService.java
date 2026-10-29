@@ -1,12 +1,10 @@
-package edu.itc.shop.notify;
+package edu.itc.shop.service;
 
 import java.time.Clock;
-import java.time.LocalDate;
-import org.springframework.stereotype.Service;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
-@Service
 public class WelcomeService {
-
     private final Notifier notifier;
     private final Clock clock;
 
@@ -16,6 +14,7 @@ public class WelcomeService {
     }
 
     public void welcome(String name) {
-        notifier.send("Welcome " + name + "! Today is " + LocalDate.now(clock));
+        String time = LocalTime.now(clock).format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+        notifier.send(name, "Welcome " + name + "! It is " + time);
     }
 }
