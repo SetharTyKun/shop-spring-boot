@@ -293,14 +293,6 @@ POST /actuator/loggers/edu.itc.shop.service.TimingAspect  {"configuredLevel":"DE
   -> the "took" line is back; GET returns {"configuredLevel":"DEBUG","effectiveLevel":"DEBUG"}
 ```
 
-### Checklist
-
-- [x] JSP list and form pages work, escape output, show validation errors and use POST-redirect-GET
-- [x] `dev` and `prod` behave differently; no secret committed; `ShopProperties` validated at start-up
-- [x] Custom health indicator, info endpoint and run-time log-level change demonstrated
-- [x] Request id appears in the log lines of a request; the timing aspect logs service calls
-- [ ] Tag `task-5`
-
 ## Challenge: layered order management
 
 Customers place orders with several lines. Stock is reserved atomically for all lines or none, orders can be listed with pagination and cancelled (which returns the stock). The code follows the layered architecture and is covered by tests at every layer.
