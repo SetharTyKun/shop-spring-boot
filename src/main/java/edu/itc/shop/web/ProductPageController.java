@@ -1,29 +1,50 @@
 package edu.itc.shop.web;
 
-import org.springframework.dao.DuplicateKeyException;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import edu.itc.shop.domain.Product;
-import edu.itc.shop.repository.ProductRepository;
+
+import edu.itc.shop.config.ShopProperties;
+import edu.itc.shop.service.ProductService;
+import edu.itc.shop.web.dto.CreateProduct;
+import edu.itc.shop.web.dto.ProductDto;
+import edu.itc.shop.web.dto.ProductRow;
 import jakarta.validation.Valid;
 
 @Controller
 @RequestMapping("/products")
 public class ProductPageController {
 
-    private final ProductRepository repo;
+    private static final Logger log = LoggerFactory.getLogger(ProductPageController.class);
 
-    public ProductPageController(ProductRepository repo) { this.repo = repo; }
+    private final ProductService service;
+    private final ShopProperties props;
+
+    public ProductPageController(ProductService service, ShopProperties props) {
+        this.service = service;
+        this.props = props;
+    }
 
     // GET /products  (list + search)
     @GetMapping
     public String list(@RequestParam(defaultValue = "") String q, Model model) {
-        model.addAttribute("products",
-                q.isBlank() ? repo.findAll() : repo.findByNameContaining(q));
+        List<ProductRow> rows = service.search(q.isBlank() ? null : q).stream()
+                .map(d -> ProductRow.of(d, props.taxRate(), props.lowStockThreshold()))
+                .toList();
+        model.addAttribute("products", rows);
         model.addAttribute("q", q);
+        model.addAttribute("currency", props.currency());
+        model.addAttribute("threshold", props.lowStockThreshold());
         return "products/list";
     }
 
@@ -40,14 +61,12 @@ public class ProductPageController {
                          BindingResult result,
                          RedirectAttributes redirect) {
         if (result.hasErrors()) {
+            log.warn("validation failed for new product: {} error(s)", result.getErrorCount());
             return "products/form";            // show the form again with errors
         }
-        try {
-            repo.insert(new Product(null, form.getName(), form.getPrice(), form.getStock()));
-        } catch (DuplicateKeyException e) {
-            result.rejectValue("name", "duplicate", "A product with this name already exists");
-            return "products/form";
-        }
+        ProductDto created = service.create(
+                new CreateProduct(form.getName(), form.getPrice(), form.getStock()));
+        log.info("created product {} '{}'", created.id(), created.name());
         redirect.addFlashAttribute("message", "Product saved: " + form.getName());
         return "redirect:/products";           // POST-redirect-GET
     }
