@@ -13,8 +13,9 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import edu.itc.shop.config.ShopProperties;
-import edu.itc.shop.notify.Notifier;
-import edu.itc.shop.product.ProductRepository;
+import edu.itc.shop.domain.Product;
+import edu.itc.shop.repository.ProductRepository;
+import edu.itc.shop.service.Notifier;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,18 +30,22 @@ class OrderServiceTest {
 
     private OrderService serviceWithTax(String taxRate) {
         return new OrderService(orders, products,
-                new ShopProperties(new BigDecimal(taxRate)), notifier);
+                new ShopProperties("USD", new BigDecimal(taxRate), 20), notifier);
     }
 
     private PlaceOrder.Line line(long productId, int qty) {
         return new PlaceOrder.Line(productId, qty);
     }
 
+    private Optional<Product> product(long id, String price) {
+        return Optional.of(new Product(id, "p" + id, new BigDecimal(price), 100));
+    }
+
     @Test
     void placeComputesTotalWithTax() {
         when(products.updateStock(anyLong(), anyInt())).thenReturn(1);
-        when(products.findPrice(1L)).thenReturn(Optional.of(new BigDecimal("49.99")));
-        when(products.findPrice(3L)).thenReturn(Optional.of(new BigDecimal("10.00")));
+        when(products.findById(1L)).thenReturn(product(1, "49.99"));
+        when(products.findById(3L)).thenReturn(product(3, "10.00"));
         when(orders.insert(any(), any())).thenReturn(7L);
 
         OrderDto dto = serviceWithTax("0.10")
@@ -55,7 +60,7 @@ class OrderServiceTest {
     @Test
     void placeRoundsHalfUp() {
         when(products.updateStock(anyLong(), anyInt())).thenReturn(1);
-        when(products.findPrice(1L)).thenReturn(Optional.of(new BigDecimal("0.03")));
+        when(products.findById(1L)).thenReturn(product(1, "0.03"));
         when(orders.insert(any(), any())).thenReturn(1L);
 
         OrderDto dto = serviceWithTax("0.50")
@@ -77,7 +82,7 @@ class OrderServiceTest {
     void placeFailsWhenStockIsInsufficient() {
         when(products.updateStock(1L, -1)).thenReturn(1);
         when(products.updateStock(2L, -999)).thenReturn(0);
-        when(products.findPrice(1L)).thenReturn(Optional.of(new BigDecimal("49.99")));
+        when(products.findById(1L)).thenReturn(product(1, "49.99"));
 
         assertThatThrownBy(() -> serviceWithTax("0.10")
                 .place(new PlaceOrder(1L, List.of(line(1, 1), line(2, 999)))))
@@ -101,7 +106,7 @@ class OrderServiceTest {
         verify(products).updateStock(1L, 2);
         verify(products).updateStock(3L, 1);
         verify(orders).updateStatus(5L, OrderStatus.CANCELLED);
-        verify(notifier).send(anyString());
+        verify(notifier).send(anyString(), anyString());
     }
 
     @Test

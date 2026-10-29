@@ -2,8 +2,9 @@ package edu.itc.shop.order;
 
 import edu.itc.shop.audit.Audited;
 import edu.itc.shop.config.ShopProperties;
-import edu.itc.shop.notify.Notifier;
-import edu.itc.shop.product.ProductRepository;
+import edu.itc.shop.repository.ProductRepository;
+import edu.itc.shop.service.Notifier;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
@@ -11,6 +12,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,7 +25,7 @@ public class OrderService {
     private final Notifier notifier;
 
     public OrderService(OrderRepository orders, ProductRepository products,
-                        ShopProperties props, Notifier notifier) {
+                        ShopProperties props, @Qualifier("emailNotifier") Notifier notifier) {
         this.orders = orders;
         this.products = products;
         this.props = props;
@@ -48,7 +50,7 @@ public class OrderService {
             if (products.updateStock(line.productId(), -line.qty()) == 0) {
                 throw new InsufficientStockException(line.productId());
             }
-            BigDecimal price = products.findPrice(line.productId()).orElseThrow();
+            BigDecimal price = products.findById(line.productId()).orElseThrow().price();
             lines.add(new OrderLine(line.productId(), line.qty(), price));
             net = net.add(price.multiply(BigDecimal.valueOf(line.qty())));
         }
@@ -76,7 +78,7 @@ public class OrderService {
             products.updateStock(line.productId(), line.qty());
         }
         orders.updateStatus(id, OrderStatus.CANCELLED);
-        notifier.send("Order " + id + " cancelled");
+        notifier.send("customer-" + order.customerId(), "Order " + id + " cancelled");
         return new OrderDto(id, OrderStatus.CANCELLED, order.total(), lines);
     }
 

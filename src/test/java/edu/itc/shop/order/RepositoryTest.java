@@ -2,7 +2,7 @@ package edu.itc.shop.order;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import edu.itc.shop.product.ProductRepository;
+import edu.itc.shop.repository.ProductRepository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -10,9 +10,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.jdbc.test.autoconfigure.JdbcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestConstructor;
 
 @JdbcTest
+@ActiveProfiles("test")
 @Import({OrderRepository.class, ProductRepository.class})
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 class RepositoryTest {
@@ -52,9 +54,9 @@ class RepositoryTest {
     }
 
     @Test
-    void findPriceReturnsPriceOrEmpty() {
-        assertThat(products.findPrice(1).orElseThrow()).isEqualByComparingTo("49.99");
-        assertThat(products.findPrice(999)).isEmpty();
+    void findByIdReturnsPriceOrEmpty() {
+        assertThat(products.findById(1).orElseThrow().price()).isEqualByComparingTo("49.99");
+        assertThat(products.findById(999)).isEmpty();
     }
 
     @Test
