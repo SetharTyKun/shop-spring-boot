@@ -5,9 +5,10 @@
 <html>
 <head>
     <title>Products</title>
+    <link rel="stylesheet" href="/css/site.css">
 </head>
 <body>
-    <h1>Products</h1>
+    <h1>Products (<c:out value="${currency}"/>)</h1>
 
     <c:if test="${not empty message}">
         <p style="color: green;"><c:out value="${message}"/></p>
@@ -22,19 +23,26 @@
 
     <table border="1" cellpadding="6">
         <tr>
-            <th>ID</th><th>Name</th><th>Price</th><th>Stock</th>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Net (<c:out value="${currency}"/>)</th>
+            <th>Gross (<c:out value="${currency}"/>)</th>
+            <th>Stock</th>
         </tr>
         <c:forEach var="p" items="${products}">
-            <tr>
+            <tr class="${p.low ? 'low' : ''}">
                 <td><c:out value="${p.id}"/></td>
                 <td><c:out value="${p.name}"/></td>
-                <td><fmt:formatNumber value="${p.price}" type="currency" currencySymbol="$"/></td>
+                <td><fmt:formatNumber value="${p.price}" minFractionDigits="2" maxFractionDigits="2"/></td>
+                <td><fmt:formatNumber value="${p.gross}" minFractionDigits="2" maxFractionDigits="2"/></td>
                 <td><c:out value="${p.stock}"/></td>
             </tr>
         </c:forEach>
         <c:if test="${empty products}">
-            <tr><td colspan="4">No products found.</td></tr>
+            <tr><td colspan="5">No products found.</td></tr>
         </c:if>
     </table>
+
+    <p class="hint">Rows in red have fewer than <c:out value="${threshold}"/> units in stock.</p>
 </body>
 </html>
